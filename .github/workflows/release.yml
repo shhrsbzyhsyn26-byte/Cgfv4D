@@ -40,42 +40,18 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Prepare artifact
+      - name: Rename binary
         run: |
           cd target/${{ matrix.target }}/release
           if [[ "${{ matrix.target }}" == *windows* ]]; then
-            cp *.exe cgf-v4d.exe 2>/dev/null || cp Cgfv4D.exe cgf-v4d.exe
-            mv cgf-v4d.exe ../../..
+            mv Cgfv4D.exe cgf-v4d.exe 2>/dev/null || mv *.exe cgf-v4d.exe
           else
-            cp *cgf-v4d* ../../.. 2>/dev/null || cp *Cgfv4D* ../../..
-            mv cgf-v4d* ../../.. 2>/dev/null || true
+            mv Cgfv4D cgf-v4d 2>/dev/null || mv cgf-v4d* cgf-v4d 2>/dev/null || true
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: cgf-v4d-${{ matrix.artifact }}
-          path: cgf-v4d*
+          path: target/${{ matrix.target }}/release/cgf-v4d*
           if-no-files-found: error
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-          files: |
-            cgf-v4d-*/cgf-v4d*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
