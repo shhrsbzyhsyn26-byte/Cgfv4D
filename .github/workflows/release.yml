@@ -40,18 +40,19 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Rename binary
+      - name: Copy binary
         run: |
-          cd target/${{ matrix.target }}/release
+          mkdir -p artifacts
           if [[ "${{ matrix.target }}" == *windows* ]]; then
-            mv Cgfv4D.exe cgf-v4d.exe 2>/dev/null || mv *.exe cgf-v4d.exe
+            cp target/\( {{ matrix.target }}/release/Cgfv4D.exe artifacts/cgf-v4d.exe || cp target/ \){{ matrix.target }}/release/*.exe artifacts/cgf-v4d.exe
           else
-            mv Cgfv4D cgf-v4d 2>/dev/null || mv cgf-v4d* cgf-v4d 2>/dev/null || true
+            cp target/\( {{ matrix.target }}/release/Cgfv4D artifacts/cgf-v4d || cp target/ \){{ matrix.target }}/release/cgf-v4d* artifacts/cgf-v4d || true
           fi
+          ls -la artifacts/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: cgf-v4d-${{ matrix.artifact }}
-          path: target/${{ matrix.target }}/release/cgf-v4d*
+          path: artifacts/*
           if-no-files-found: error
