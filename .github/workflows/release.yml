@@ -1,0 +1,81 @@
+name: Release Rust Binary
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact: linux-x86_64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact: linux-aarch64
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            artifact: windows-x86_64
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            artifact: macos-x86_64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            artifact: macos-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare artifact
+        run: |
+          cd target/${{ matrix.target }}/release
+          if [[ "${{ matrix.target }}" == *windows* ]]; then
+            cp *.exe cgf-v4d.exe 2>/dev/null || cp Cgfv4D.exe cgf-v4d.exe
+            mv cgf-v4d.exe ../../..
+          else
+            cp *cgf-v4d* ../../.. 2>/dev/null || cp *Cgfv4D* ../../..
+            mv cgf-v4d* ../../.. 2>/dev/null || true
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgf-v4d-${{ matrix.artifact }}
+          path: cgf-v4d*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          files: |
+            cgf-v4d-*/cgf-v4d*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
