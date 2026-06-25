@@ -1,6 +1,11 @@
 [package]
-name = "Cgfv4D"
+name = "cgf-v4d"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+description = "A simple 4D terminal game"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/shhrsbzyhsyn26-byte/Cgfv4D"
+keywords = ["game", "4d", "terminal", "rust"]
+categories = ["games", "command-line-utilities"]
 
 [dependencies]
